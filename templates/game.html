@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAP & RISK</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050508;
+  --panel: #0d0d14;
+  --panel2: #111120;
+  --accent: #ff3b3b;
+  --gold: #ffd24d;
+  --cyan: #00f5d4;
+  --purple: #9b5de5;
+  --green: #39ff14;
+  --orange: #ff8c00;
+  --text: #f0f0f0;
+  --muted: #555570;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  font-family: 'Space Mono', monospace;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-x: hidden;
+  padding: 16px 0 40px;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: linear-gradient(rgba(255,59,59,0.035) 1px,transparent 1px), linear-gradient(90deg,rgba(255,59,59,0.035) 1px,transparent 1px);
+  background-size:40px 40px;
+  animation:gridMove 20s linear infinite;
+  pointer-events:none; z-index:0;
+}
+@keyframes gridMove { to { transform:translateY(40px); } }
+
+.orb { position:fixed; border-radius:50%; filter:blur(80px); pointer-events:none; }
+.orb1 { width:400px; height:400px; background:var(--accent); top:-120px; left:-120px; opacity:0.12; }
+.orb2 { width:300px; height:300px; background:var(--purple); bottom:-80px; right:-80px; opacity:0.12; }
+.orb3 { width:200px; height:200px; background:var(--cyan); top:40%; left:50%; transform:translate(-50%,-50%); opacity:0.06; }
+
+.wrap {
+  position:relative; z-index:10;
+  width:440px; max-width:96vw;
+  display:flex; flex-direction:column; gap:14px;
+}
+
+/* HEADER */
+.header { display:flex; align-items:center; justify-content:space-between; padding:4px 0; }
+.logo {
+  font-family:'Bebas Neue',cursive; font-size:40px; letter-spacing:3px; line-height:1;
+  background:linear-gradient(135deg,var(--accent),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.coin-pill {
+  background:rgba(255,210,77,0.12); border:1px solid rgba(255,210,77,0.3);
+  border-radius:99px; padding:4px 14px; font-size:13px; color:var(--gold); font-weight:700;
+  display:flex; align-items:center; gap:6px;
+}
+.level-pill {
+  background:rgba(155,93,229,0.12); border:1px solid rgba(155,93,229,0.3);
+  border-radius:99px; padding:3px 12px; font-size:10px; color:var(--purple);
+}
+.shop-pill {
+  background:rgba(255,210,77,0.1); border:1px solid rgba(255,210,77,0.3);
+  border-radius:8px; padding:3px 10px; color:var(--gold); cursor:pointer;
+  font-size:10px; font-family:'Space Mono',monospace; transition:all .2s;
+}
+.shop-pill:hover { background:rgba(255,210,77,0.2); }
+
+/* MAIN PANEL */
+.panel {
+  background:var(--panel); border:1px solid rgba(255,255,255,0.07);
+  border-radius:22px; padding:22px; position:relative; overflow:hidden;
+}
+.panel::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,59,59,0.05) 0%,transparent 55%); pointer-events:none;
+}
+
+.score-section { text-align:center; margin-bottom:16px; }
+.score-lbl { font-size:9px; letter-spacing:4px; color:var(--muted); }
+.score-val {
+  font-family:'Bebas Neue',cursive; font-size:90px; line-height:1;
+  color:var(--text); text-shadow:0 0 30px rgba(255,59,59,0.3);
+  transition:color .2s;
+}
+.score-val.safe  { color:var(--cyan);  text-shadow:0 0 40px rgba(0,245,212,0.7); }
+.score-val.warn  { color:var(--gold);  text-shadow:0 0 40px rgba(255,210,77,0.7); }
+.score-val.danger{ color:var(--accent); text-shadow:0 0 50px rgba(255,59,59,1); }
+.mult-row { display:flex; justify-content:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
+.badge {
+  border-radius:6px; padding:2px 10px; font-size:11px; font-weight:700;
+  border:1px solid; display:inline-block;
+}
+.badge-mult  { background:rgba(255,210,77,0.1);  border-color:rgba(255,210,77,0.35);  color:var(--gold); }
+.badge-mode  { background:rgba(0,245,212,0.08);  border-color:rgba(0,245,212,0.3);    color:var(--cyan); font-size:9px; }
+.badge-bonus { background:rgba(155,93,229,0.1);  border-color:rgba(155,93,229,0.3);   color:var(--purple); font-size:9px; }
+
+.hb-wrap { height:36px; margin-bottom:6px; overflow:hidden; }
+.hb-svg  { width:100%; height:100%; }
+
+.risk-row { display:flex; justify-content:space-between; font-size:9px; letter-spacing:2px; color:var(--muted); margin-bottom:5px; }
+.rbar-bg { height:9px; background:rgba(255,255,255,0.05); border-radius:99px; overflow:hidden; margin-bottom:14px; }
+.rbar-fill { height:100%; border-radius:99px; width:0%; background:linear-gradient(90deg,var(--cyan),var(--gold),var(--accent)); transition:width .25s ease; }
+
+.dots-row { display:flex; gap:5px; justify-content:center; margin-bottom:16px; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--muted); transition:all .2s; }
+.dot.on  { background:var(--cyan); box-shadow:0 0 7px var(--cyan); }
+.dot.hot { background:var(--accent); box-shadow:0 0 7px var(--accent); animation:blink .3s infinite; }
+@keyframes blink { 50%{opacity:.2;} }
+
+.active-pus { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; min-height:0; }
+.apu-chip {
+  background:rgba(0,245,212,0.1); border:1px solid rgba(0,245,212,0.4);
+  border-radius:99px; padding:3px 12px; font-size:10px; color:var(--cyan);
+  animation: glowPulse 1.2s ease infinite;
+}
+@keyframes glowPulse { 50%{box-shadow:0 0 12px rgba(0,245,212,0.5);} }
+
+.inv-btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.inv-btn {
+  flex:1; min-width:60px; background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1); border-radius:10px;
+  padding:6px 4px; cursor:pointer; font-family:'Space Mono',monospace;
+  font-size:9px; text-align:center; transition:all .2s;
+}
+.inv-btn:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); transform:translateY(-1px); }
+.inv-btn .ib-icon { font-size:16px; display:block; margin-bottom:2px; }
+.inv-btn .ib-qty  { color:var(--gold); font-weight:700; }
+
+.tap-btn {
+  width:100%; height:88px; background:linear-gradient(135deg,#ff3b3b,#a80012);
+  border:none; border-radius:16px; font-family:'Bebas Neue',cursive; font-size:38px;
+  letter-spacing:4px; color:#fff; cursor:pointer; position:relative; overflow:hidden;
+  transition:transform .08s, box-shadow .1s;
+  box-shadow:0 8px 30px rgba(255,59,59,0.5), 0 2px 0 rgba(255,255,255,0.12) inset;
+  margin-bottom:10px;
+}
+.tap-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 12px 40px rgba(255,59,59,0.7), 0 2px 0 rgba(255,255,255,0.12) inset; }
+.tap-btn:active:not(:disabled) { transform:translateY(2px) scale(0.98); }
+.tap-btn:disabled { opacity:.35; cursor:not-allowed; transform:none; }
+.tap-btn::after { content:''; position:absolute; inset:0; background:linear-gradient(to bottom,rgba(255,255,255,0.15) 0%,transparent 50%); pointer-events:none; }
+
+.cashout-btn {
+  width:100%; height:58px; background:transparent;
+  border:2px solid var(--cyan); border-radius:14px;
+  font-family:'Bebas Neue',cursive; font-size:24px; letter-spacing:3px;
+  color:var(--cyan); cursor:pointer; transition:all .2s;
+  box-shadow:0 0 14px rgba(0,245,212,0.15);
+}
+.cashout-btn:hover:not(:disabled) { background:rgba(0,245,212,0.1); box-shadow:0 0 25px rgba(0,245,212,0.45); }
+.cashout-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+.hint { text-align:center; font-size:10px; color:var(--muted); letter-spacing:1px; margin-top:10px; }
+
+.ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,0.28); transform:scale(0); animation:rpl .5s linear; pointer-events:none; }
+@keyframes rpl { to{transform:scale(4);opacity:0;} }
+
+.float-pts { position:fixed; font-family:'Bebas Neue',cursive; font-size:22px; color:var(--cyan); pointer-events:none; z-index:9999; animation:fup .8s ease forwards; text-shadow:0 0 10px var(--cyan); }
+@keyframes fup { to{opacity:0;transform:translateY(-60px) scale(.7);} }
+
+@keyframes shake { 20%{transform:translateX(-8px) rotate(-1deg);} 40%{transform:translateX(8px) rotate(1deg);} 60%{transform:translateX(-5px);} 80%{transform:translateX(5px);} }
+.shake { animation:shake .4s ease; }
+
+@keyframes pop { 0%{transform:scale(1.35);} 100%{transform:scale(1);} }
+.pop { animation:pop .15s ease; }
+
+/* STATS ROW */
+.stats-row { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; }
+.stat-card { background:var(--panel); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:12px 8px; text-align:center; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.s-coins::before  { background:var(--gold); }
+.s-streak::before { background:var(--purple); }
+.s-best::before   { background:var(--accent); }
+.s-level::before  { background:var(--cyan); }
+.stat-icon { font-size:16px; margin-bottom:3px; }
+.stat-num { font-family:'Bebas Neue',cursive; font-size:24px; line-height:1; }
+.s-coins .stat-num  { color:var(--gold); }
+.s-streak .stat-num { color:var(--purple); }
+.s-best .stat-num   { color:var(--accent); }
+.s-level .stat-num  { color:var(--cyan); }
+.stat-lbl { font-size:8px; letter-spacing:2px; color:var(--muted); margin-top:2px; }
+
+/* STREAK BANNER */
+.streak-banner { background:linear-gradient(135deg,rgba(155,93,229,0.18),rgba(155,93,229,0.05)); border:1px solid rgba(155,93,229,0.4); border-radius:12px; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; }
+.streak-banner .sl { color:var(--purple); font-weight:700; font-size:12px; }
+.streak-banner .sr { color:var(--muted); font-size:10px; }
+
+.sec-title { font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:2px; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+
+/* SPIN */
+.spin-panel { background:var(--panel); border:1px solid rgba(255,210,77,0.2); border-radius:18px; padding:16px; }
+.spin-btn { width:100%; height:44px; background:linear-gradient(135deg,var(--gold),#e6a800); border:none; border-radius:12px; font-family:'Bebas Neue',cursive; font-size:20px; letter-spacing:2px; color:#050508; cursor:pointer; transition:all .2s; box-shadow:0 4px 20px rgba(255,210,77,0.4); }
+.spin-btn:hover:not(:disabled) { transform:translateY(-2px); }
+.spin-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+/* LB + MISSIONS */
+.lb-panel  { background:var(--panel); border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:16px; }
+.ms-panel  { background:var(--panel); border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:16px; }
+.lb-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; }
+.lb-row:last-child { border:none; }
+.lb-rank { font-family:'Bebas Neue',cursive; font-size:16px; width:26px; color:var(--muted); }
+.lb-rank.gold   { color:var(--gold); }
+.lb-rank.silver { color:#aaa; }
+.lb-rank.bronze { color:#cd7f32; }
+.lb-name { flex:1; padding:0 8px; color:rgba(255,255,255,0.8); }
+.lb-score { color:var(--gold); font-weight:700; }
+.ms-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.ms-item:last-child { border:none; }
+.ms-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+.ms-dot.done { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
+.ms-text { font-size:10px; flex:1; color:rgba(255,255,255,0.7); }
+.ms-rew  { font-size:9px; color:var(--gold); white-space:nowrap; }
+
+/* XP BAR */
+.xp-bg { height:6px; background:rgba(255,255,255,0.06); border-radius:99px; overflow:hidden; }
+.xp-fill { height:100%; background:linear-gradient(90deg,var(--cyan),var(--purple)); border-radius:99px; transition:width .6s ease; }
+
+/* INV CHIPS */
+.inv-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.inv-chip { background:rgba(0,245,212,0.1); border:1px solid rgba(0,245,212,0.3); border-radius:8px; padding:4px 10px; font-size:10px; color:var(--cyan); display:flex; align-items:center; gap:4px; }
+.inv-chip .qty { font-weight:700; color:var(--gold); }
+
+/* ════════ MODALS ════════ */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(5,5,8,0.88);
+  backdrop-filter:blur(10px); z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.modal-overlay.show { opacity:1; pointer-events:auto; }
+
+.modal {
+  background:var(--panel); border:1px solid rgba(255,255,255,0.1);
+  border-radius:24px; padding:26px; width:400px; max-width:94vw;
+  max-height:88vh; overflow-y:auto;
+  transform:scale(0.9) translateY(24px); transition:transform .28s ease, opacity .28s ease; opacity:0;
+}
+.modal-overlay.show .modal { transform:scale(1) translateY(0); opacity:1; }
+
+.modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.modal-title { font-family:'Bebas Neue',cursive; font-size:28px; letter-spacing:2px; }
+.modal-close { background:rgba(255,255,255,0.07); border:none; color:var(--muted); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:16px; transition:all .2s; display:flex; align-items:center; justify-content:center; }
+.modal-close:hover { background:rgba(255,255,255,0.14); color:var(--text); }
+
+/* result section */
+.result-hero { text-align:center; margin-bottom:20px; }
+.result-icon { font-size:52px; margin-bottom:4px; }
+.result-title { font-family:'Bebas Neue',cursive; font-size:44px; letter-spacing:3px; line-height:1; }
+.result-title.crash { color:var(--accent); text-shadow:0 0 30px rgba(255,59,59,0.8); }
+.result-title.win   { color:var(--cyan);   text-shadow:0 0 30px rgba(0,245,212,0.7); }
+.result-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px; }
+.rs-card { background:var(--panel2); border-radius:12px; padding:12px; text-align:center; }
+.rs-val { font-family:'Bebas Neue',cursive; font-size:28px; color:var(--gold); }
+.rs-lbl { font-size:9px; color:var(--muted); letter-spacing:2px; margin-top:2px; }
+
+/* packs */
+.modal {
+  background:var(--panel); border:1px solid rgba(255,255,255,0.1);
+  border-radius:24px; padding:26px; width:400px; max-width:94vw;
+  max-height:88vh; overflow-y:auto; overflow-x:visible;
+  transform:scale(0.9) translateY(24px); transition:transform .28s ease, opacity .28s ease; opacity:0;
+}
+.packs-label { font-size:9px; letter-spacing:3px; color:var(--muted); margin-bottom:10px; text-transform:uppercase; }
+.packs-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.pack-card { background:var(--panel2); border-radius:14px; padding:12px 10px; border:2px solid rgba(255,255,255,0.07); cursor:pointer; transition:all .2s; text-align:center; position:relative; }
+.pack-card:hover { transform:translateY(-3px); border-color:rgba(255,255,255,0.18); }
+.pack-card.selected { border-color:var(--cyan) !important; background:rgba(0,245,212,0.07) !important; }
+.pack-badge { position:absolute; top:-9px; left:50%; transform:translateX(-50%); background:var(--gold); color:#050508; font-size:8px; font-weight:700; padding:2px 8px; border-radius:99px; letter-spacing:1px; white-space:nowrap; }
+.pack-icon { font-size:24px; margin-bottom:5px; }
+.pack-name { font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; margin-bottom:4px; }
+.pack-items { font-size:8px; color:var(--muted); line-height:1.8; }
+.pack-cost { font-size:11px; color:var(--gold); font-weight:700; margin-top:6px; }
+.pack-free { font-size:10px; color:var(--cyan); font-weight:700; margin-top:6px; }
+
+.modal-btn {
+  width:100%; height:56px; border:none; border-radius:14px;
+  font-family:'Bebas Neue',cursive; font-size:26px; letter-spacing:3px;
+  cursor:pointer; transition:all .2s; display:block;
+}
+.modal-btn.go { background:linear-gradient(135deg,var(--accent),#a80012); color:#fff; box-shadow:0 6px 25px rgba(255,59,59,0.5); }
+.modal-btn.go:hover { transform:translateY(-2px); box-shadow:0 10px 35px rgba(255,59,59,0.7); }
+.modal-btn.cyan { background:linear-gradient(135deg,var(--cyan),#00b8a0); color:#050508; box-shadow:0 6px 20px rgba(0,245,212,0.4); height:46px; font-size:20px; margin-top:8px; }
+.modal-btn.cyan:hover { transform:translateY(-2px); }
+.modal-btn.gold { background:linear-gradient(135deg,var(--gold),#e6a800); color:#050508; box-shadow:0 6px 20px rgba(255,210,77,0.4); height:46px; font-size:20px; margin-top:8px; }
+
+/* SHOP modal */
+.tabs { display:flex; gap:6px; margin-bottom:14px; }
+.tab-btn { flex:1; padding:7px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--muted); cursor:pointer; transition:all .2s; text-transform:uppercase; }
+.tab-btn.active { background:rgba(0,245,212,0.1); border-color:rgba(0,245,212,0.4); color:var(--cyan); }
+.shop-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.shop-item { background:var(--panel2); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:14px 12px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; transition:all .2s; text-align:center; position:relative; }
+.shop-item:hover:not(.owned):not(.maxed) { border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.04); transform:translateY(-2px); }
+.shop-item.owned { border-color:rgba(0,245,212,0.4); background:rgba(0,245,212,0.06); cursor:default; }
+.shop-item.maxed { border-color:rgba(255,210,77,0.4); background:rgba(255,210,77,0.06); cursor:default; }
+.si-icon { font-size:26px; }
+.si-name { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--text); }
+.si-desc { font-size:9px; color:var(--muted); line-height:1.4; }
+.si-cost { font-size:11px; color:var(--gold); font-weight:700; margin-top:2px; }
+.si-owned { font-size:9px; color:var(--cyan); font-weight:700; }
+.si-level { position:absolute; top:8px; right:10px; font-size:9px; color:var(--purple); font-weight:700; }
+
+/* ═══════ COMBO METER ═══════ */
+.combo-bar-wrap {
+  height:6px; background:rgba(255,255,255,0.05); border-radius:99px;
+  overflow:hidden; margin-bottom:8px; position:relative;
+}
+.combo-bar-fill {
+  height:100%; border-radius:99px; width:0%;
+  background:linear-gradient(90deg,var(--orange),var(--gold),#fff);
+  transition:width .15s ease;
+  box-shadow:0 0 8px rgba(255,140,0,0.7);
+}
+.combo-badge {
+  display:none; position:absolute; top:-20px; right:0;
+  font-family:'Bebas Neue',cursive; font-size:13px; letter-spacing:1px;
+  color:var(--orange); text-shadow:0 0 8px var(--orange);
+}
+.combo-badge.visible { display:block; }
+.combo-badge.maxed { color:var(--gold); text-shadow:0 0 12px var(--gold); animation:comboGlow .4s infinite alternate; }
+@keyframes comboGlow { from{opacity:.7;} to{opacity:1;transform:scale(1.05);} }
+
+/* ═══════ PRESTIGE ═══════ */
+.prestige-banner {
+  background:linear-gradient(135deg,rgba(255,210,77,0.12),rgba(155,93,229,0.12));
+  border:1px solid rgba(255,210,77,0.35); border-radius:14px;
+  padding:12px 16px; display:none; align-items:center; justify-content:space-between; gap:10px;
+}
+.prestige-banner.visible { display:flex; }
+.prestige-txt { font-size:10px; line-height:1.5; }
+.prestige-txt strong { color:var(--gold); font-family:'Bebas Neue',cursive; font-size:15px; letter-spacing:1px; }
+.prestige-btn {
+  background:linear-gradient(135deg,var(--gold),#c49000); border:none; border-radius:10px;
+  font-family:'Bebas Neue',cursive; font-size:16px; letter-spacing:1px; color:#050508;
+  padding:8px 14px; cursor:pointer; white-space:nowrap; transition:all .2s;
+  box-shadow:0 4px 16px rgba(255,210,77,0.4); flex-shrink:0;
+}
+.prestige-btn:hover { transform:translateY(-2px); box-shadow:0 6px 22px rgba(255,210,77,0.6); }
+.prestige-star { color:var(--gold); font-size:11px; }
+
+/* prestige glow on score */
+.score-val.prestige-glow { text-shadow:0 0 40px rgba(255,210,77,0.9), 0 0 80px rgba(155,93,229,0.5) !important; }
+
+/* ═══════ RANDOM EVENT ═══════ */
+.event-toast {
+  position:fixed; top:80px; left:50%; transform:translateX(-50%) translateY(-20px);
+  z-index:9000; background:var(--panel); border:2px solid; border-radius:16px;
+  padding:14px 22px; text-align:center; min-width:260px; max-width:90vw;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s ease, transform .3s ease;
+  box-shadow:0 12px 40px rgba(0,0,0,0.7);
+}
+.event-toast.show {
+  opacity:1; transform:translateX(-50%) translateY(0);
+}
+.event-toast .et-icon { font-size:30px; margin-bottom:4px; }
+.event-toast .et-title { font-family:'Bebas Neue',cursive; font-size:22px; letter-spacing:2px; }
+.event-toast .et-desc  { font-size:10px; color:rgba(255,255,255,0.6); margin-top:3px; letter-spacing:1px; }
+
+/* event colour themes */
+.event-toast.fever  { border-color:var(--accent); }
+.event-toast.fever  .et-title { color:var(--accent); }
+.event-toast.cursed { border-color:var(--purple); }
+.event-toast.cursed .et-title { color:var(--purple); }
+.event-toast.rain   { border-color:var(--gold); }
+.event-toast.rain   .et-title { color:var(--gold); }
+.event-toast.luck   { border-color:var(--cyan); }
+.event-toast.luck   .et-title { color:var(--cyan); }
+.event-toast.ghost  { border-color:rgba(155,93,229,0.7); }
+.event-toast.ghost  .et-title { color:var(--purple); }
+
+/* active event chip — same style as power-up chips */
+.event-chip {
+  background:rgba(255,140,0,0.12); border:1px solid rgba(255,140,0,0.45);
+  border-radius:99px; padding:3px 12px; font-size:10px; color:var(--orange);
+  animation:glowPulse 1.2s ease infinite;
+}
+
+/* ═══════ DAILY CHALLENGES ═══════ */
+.dc-panel { background:var(--panel); border:1px solid rgba(0,245,212,0.2); border-radius:18px; padding:16px; }
+.dc-item {
+  background:var(--panel2); border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px; padding:10px 12px; margin-bottom:8px;
+}
+.dc-item:last-child { margin-bottom:0; }
+.dc-item.done { border-color:rgba(0,245,212,0.35); background:rgba(0,245,212,0.05); }
+.dc-row1 { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+.dc-name { font-size:10px; font-weight:700; color:var(--text); flex:1; padding-right:8px; }
+.dc-reward { font-size:9px; color:var(--gold); white-space:nowrap; }
+.dc-bar-bg { height:5px; background:rgba(255,255,255,0.06); border-radius:99px; overflow:hidden; }
+.dc-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--cyan),var(--purple)); transition:width .4s ease; }
+.dc-status { font-size:9px; color:var(--muted); margin-top:4px; display:flex; justify-content:space-between; }
+.dc-status.done-txt { color:var(--cyan); }
+.dc-refresh { font-size:9px; color:var(--muted); text-align:center; margin-top:10px; }
+
+/* ═══════ PRESTIGE MODAL ═══════ */
+.prestige-stars { text-align:center; font-size:32px; letter-spacing:4px; margin-bottom:8px; }
+.prestige-mult-display {
+  background:linear-gradient(135deg,rgba(255,210,77,0.15),rgba(155,93,229,0.15));
+  border:1px solid rgba(255,210,77,0.4); border-radius:14px;
+  padding:16px; text-align:center; margin-bottom:16px;
+}
+.prestige-mult-num { font-family:'Bebas Neue',cursive; font-size:52px; color:var(--gold); line-height:1; }
+.prestige-mult-lbl { font-size:10px; color:var(--muted); letter-spacing:2px; margin-top:4px; }
+.prestige-loses { background:rgba(255,59,59,0.07); border:1px solid rgba(255,59,59,0.2); border-radius:12px; padding:12px; margin-bottom:14px; font-size:10px; color:rgba(255,255,255,0.6); line-height:2; }
+.prestige-keeps { background:rgba(0,245,212,0.06); border:1px solid rgba(0,245,212,0.2); border-radius:12px; padding:12px; margin-bottom:14px; font-size:10px; color:rgba(255,255,255,0.6); line-height:2; }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:99px; }
+@keyframes fabPulse {
+  0%,100% { box-shadow:0 6px 24px rgba(255,59,59,0.6); }
+  50%      { box-shadow:0 6px 36px rgba(255,59,59,0.95), 0 0 0 10px rgba(255,59,59,0.13); }
+}
+
+/* ═══════ TOOLTIP SYSTEM — body-level, never clipped ═══════ */
+#tt-global {
+  position: fixed;
+  z-index: 99999;
+  width: 240px;
+  background: #13132a;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04);
+  pointer-events: none;
+  display: none;
+  animation: ttIn .16s ease;
+}
+@keyframes ttIn {
+  from { opacity:0; transform:scale(0.94) translateY(4px); }
+  to   { opacity:1; transform:scale(1)    translateY(0); }
+}
+/* arrow */
+#tt-global::before {
+  content:'';
+  position:absolute;
+  width:9px; height:9px;
+  background:#13132a;
+  border:1px solid rgba(255,255,255,0.14);
+  transform:rotate(45deg);
+}
+#tt-global.arr-bottom::before { bottom:-5px; left:50%; margin-left:-4px; border-top:none; border-left:none; }
+#tt-global.arr-top::before    { top:-5px;    left:50%; margin-left:-4px; border-bottom:none; border-right:none; }
+#tt-global.arr-left::before   { left:-5px;   top:20px; border-bottom:none; border-left:none; transform:rotate(-45deg); }
+
+.tt-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.tt-title  { font-family:'Bebas Neue',cursive; font-size:17px; letter-spacing:1px; line-height:1; }
+.tt-who    { font-size:9px; color:rgba(255,255,255,0.4); font-style:italic; margin-bottom:6px; }
+.tt-body   { font-size:10px; color:rgba(255,255,255,0.65); line-height:1.7; }
+.tt-row    { display:flex; align-items:flex-start; gap:6px; margin-bottom:4px; }
+.tt-row:last-child { margin-bottom:0; }
+.tt-bullet         { font-size:10px; margin-top:1px; flex-shrink:0; color:var(--cyan); }
+.tt-bullet.red     { color:var(--accent); }
+.tt-bullet.gold    { color:var(--gold); }
+.tt-bullet.purple  { color:var(--purple); }
+.tt-tag {
+  display:inline-block; padding:2px 8px; border-radius:99px;
+  font-size:9px; font-weight:700; letter-spacing:1px; margin-top:7px; border:1px solid;
+}
+.tt-tag.good   { color:var(--cyan);   border-color:rgba(0,245,212,0.4);  background:rgba(0,245,212,0.08); }
+.tt-tag.risky  { color:var(--gold);   border-color:rgba(255,210,77,0.4); background:rgba(255,210,77,0.08); }
+.tt-tag.power  { color:var(--purple); border-color:rgba(155,93,229,0.4); background:rgba(155,93,229,0.08); }
+.tt-tag.safe   { color:var(--green);  border-color:rgba(57,255,20,0.4);  background:rgba(57,255,20,0.08); }
+.tt-tag.danger { color:var(--accent); border-color:rgba(255,59,59,0.4);  background:rgba(255,59,59,0.08); }
+
+/* elements that have tooltips get a subtle info indicator */
+[data-tt]:not(.pack-card) { cursor:help; }
+[data-tt].pack-card       { cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- GLOBAL TOOLTIP — rendered at body level, never clipped -->
+<div id="tt-global"></div>
+
+<!-- RANDOM EVENT TOAST -->
+<div class="event-toast" id="eventToast">
+  <div class="et-icon" id="etIcon">🔥</div>
+  <div class="et-title" id="etTitle">EVENT!</div>
+  <div class="et-desc"  id="etDesc">Loading...</div>
+</div>
+
+<!-- PRESTIGE MODAL -->
+<div class="modal-overlay" id="prestigeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--gold)">✨ PRESTIGE REBIRTH</div>
+      <button class="modal-close" onclick="closePrestige()">✕</button>
+    </div>
+    <div class="prestige-stars" id="prestigeStarsDisplay">⭐</div>
+    <div class="prestige-mult-display">
+      <div class="prestige-mult-num" id="prestigeMultDisplay">×1.1</div>
+      <div class="prestige-mult-lbl">PERMANENT SCORE MULTIPLIER</div>
+    </div>
+    <div class="prestige-loses">
+      <div style="color:var(--accent);font-weight:700;margin-bottom:6px;font-family:'Bebas Neue',cursive;letter-spacing:1px;font-size:13px;">⚠️ YOU WILL LOSE</div>
+      All coins &nbsp;·&nbsp; All inventory &nbsp;·&nbsp; All upgrades &nbsp;·&nbsp; All perks<br>
+      Level resets to 1 &nbsp;·&nbsp; Streak resets &nbsp;·&nbsp; Score resets
+    </div>
+    <div class="prestige-keeps">
+      <div style="color:var(--cyan);font-weight:700;margin-bottom:6px;font-family:'Bebas Neue',cursify;letter-spacing:1px;font-size:13px;">✅ YOU KEEP</div>
+      Prestige multiplier (stacks every rebirth)<br>
+      Leaderboard records &nbsp;·&nbsp; Total rounds played
+    </div>
+    <button class="modal-btn go" onclick="confirmPrestige()" style="background:linear-gradient(135deg,var(--gold),#b8860b);box-shadow:0 6px 25px rgba(255,210,77,0.5);">
+      ✨ REBIRTH NOW
+    </button>
+    <button class="modal-btn cyan" onclick="closePrestige()" style="margin-top:8px;">NOT YET</button>
+  </div>
+</div>
+<div class="modal-overlay" id="preModal">
+  <div class="modal" id="preModalInner"></div>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal-overlay" id="shopModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--gold)">🛒 ITEM SHOP</div>
+      <button class="modal-close" onclick="closeShop()">✕</button>
+    </div>
+    <div class="coin-pill" style="margin-bottom:14px;justify-content:center;">🪙 <span id="shopCoinDisplay">0</span> coins</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="shopTab('powerups',this)">Power-Ups</button>
+      <button class="tab-btn" onclick="shopTab('upgrades',this)">Upgrades</button>
+      <button class="tab-btn" onclick="shopTab('perks',this)">Perks</button>
+    </div>
+    <div id="shopTabContent"></div>
+    <button class="modal-btn cyan" style="margin-top:14px;" onclick="closeShop()">CLOSE SHOP</button>
+  </div>
+</div>
+
+<!-- MAIN UI -->
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="logo">TAP &amp;<br>RISK</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;">DANGER TAPPER v2</div>
+    </div>
+    <div class="header-right">
+      <div class="coin-pill">🪙 <span id="coinDisplay">0</span></div>
+      <div class="level-pill">⚡ LV <span id="lvDisplay">1</span> &nbsp;·&nbsp; <span id="xpDisplay">0</span>/<span id="xpNextDisplay">100</span> XP</div>
+      <button class="shop-pill" onclick="openShop()">🛒 SHOP</button>
+    </div>
+  </div>
+
+  <!-- XP Bar -->
+  <div class="xp-bg"><div class="xp-fill" id="xpBar" style="width:0%"></div></div>
+
+  <!-- Main Panel -->
+  <div class="panel" id="mainPanel">
+    <div class="score-section">
+      <div class="score-lbl">SCORE</div>
+      <div class="score-val" id="scoreVal">0</div>
+      <div class="mult-row">
+        <div class="badge badge-mult" id="multBadge">×1.0</div>
+        <div class="badge badge-mode" id="modeBadge">NORMAL MODE</div>
+        <div class="badge badge-bonus" id="bonusBadge" style="display:none">STREAK BONUS</div>
+      </div>
+    </div>
+
+    <div class="hb-wrap">
+      <svg class="hb-svg" id="hbSvg" viewBox="0 0 400 36" preserveAspectRatio="none">
+        <polyline id="hbLine" points="" stroke="#00f5d4" stroke-width="2" fill="none" stroke-opacity=".8"/>
+      </svg>
+    </div>
+
+    <div class="risk-row"><span>RISK LEVEL</span><span id="riskPct">0%</span></div>
+    <div class="rbar-bg"><div class="rbar-fill" id="riskBar"></div></div>
+
+    <div class="dots-row" id="dotsRow"></div>
+
+    <!-- Combo Meter -->
+    <div style="position:relative;margin-bottom:10px;">
+      <div class="combo-badge" id="comboBadge">COMBO ×1</div>
+      <div class="combo-bar-wrap">
+        <div class="combo-bar-fill" id="comboBar"></div>
+      </div>
+    </div>
+
+    <div class="active-pus" id="activePus"></div>
+
+    <!-- In-game inventory buttons -->
+    <div class="inv-btn-row" id="invBtnRow"></div>
+
+    <button class="tap-btn" id="tapBtn" onclick="onTap(event)" disabled>TAP!</button>
+    <button class="cashout-btn" id="cashoutBtn" onclick="cashOut()" disabled>💰 CASH OUT</button>
+
+    <!-- Always-visible start button shown when game is not active -->
+    <button id="inPanelStartBtn" onclick="openPreModal()" style="
+      width:100%; height:64px; margin-top:10px;
+      background:linear-gradient(135deg,#00f5d4,#00b8a0);
+      border:none; border-radius:14px;
+      font-family:'Bebas Neue',cursive; font-size:28px; letter-spacing:4px;
+      color:#050508; cursor:pointer;
+      box-shadow:0 6px 25px rgba(0,245,212,0.45);
+      transition:all .2s; display:block;
+    " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      ▶ START ROUND
+    </button>
+
+    <div class="hint" id="hintText">TAP THE BUTTON ABOVE TO BEGIN!</div>
+  </div>
+
+  <!-- Floating Action Button — always visible, follows scroll -->
+  <div id="fab" onclick="openPreModal()" style="
+    position:fixed; bottom:24px; right:20px; z-index:500;
+    width:64px; height:64px; border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),#a80012);
+    box-shadow:0 6px 24px rgba(255,59,59,0.6);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:all .2s;
+    font-size:26px;
+    animation: fabPulse 2s ease infinite;
+  " title="Start Round" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform=''">
+    ▶
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card s-coins"><div class="stat-icon">🪙</div><div class="stat-num" id="sc1">0</div><div class="stat-lbl">COINS</div></div>
+    <div class="stat-card s-streak"><div class="stat-icon">🔥</div><div class="stat-num" id="sc2">0</div><div class="stat-lbl">STREAK</div></div>
+    <div class="stat-card s-best"><div class="stat-icon">🏆</div><div class="stat-num" id="sc3">0</div><div class="stat-lbl">BEST</div></div>
+    <div class="stat-card s-level"><div class="stat-icon">⚡</div><div class="stat-num" id="sc4">1</div><div class="stat-lbl">LEVEL</div></div>
+  </div>
+
+  <div class="streak-banner" id="streakBanner" style="display:none">
+    <div class="sl" id="streakBannerTxt">🔥 STREAK BONUS ACTIVE</div>
+    <div class="sr">KEEP IT UP!</div>
+  </div>
+
+  <!-- Prestige Ready Banner -->
+  <div class="prestige-banner" id="prestigeBanner">
+    <div class="prestige-txt">
+      <strong>✨ PRESTIGE READY!</strong><br>
+      <span style="color:rgba(255,255,255,0.55);">Level 10 reached. Rebirth for a permanent <span style="color:var(--gold)" id="prestigeNextMult">×1.1</span> score multiplier!</span>
+    </div>
+    <button class="prestige-btn" onclick="openPrestige()">REBIRTH ✨</button>
+  </div>
+
+  <!-- Daily Spin -->
+  <div class="spin-panel">
+    <div class="sec-title" style="color:var(--gold)">🎰 DAILY SPIN</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:12px;">Spin once per day for free rewards!</div>
+    <div style="display:flex;justify-content:center;margin-bottom:12px;">
+      <div style="position:relative;width:130px;height:130px;">
+        <div id="spinWheelEl" style="width:130px;height:130px;border-radius:50%;border:3px solid rgba(255,210,77,0.35);overflow:hidden;background:var(--panel2);display:flex;align-items:center;justify-content:center;transition:transform 3s cubic-bezier(.17,.67,.12,.99);">
+          <div id="spinCenter" style="font-family:'Bebas Neue',cursive;font-size:14px;color:var(--gold);text-align:center;padding:10px;line-height:1.4;">SPIN<br>ME!</div>
+        </div>
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:20px;filter:drop-shadow(0 0 6px var(--gold));">▼</div>
+      </div>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="doSpin()">🎰 SPIN!</button>
+    <div id="spinResult" style="text-align:center;font-family:'Bebas Neue',cursive;font-size:22px;color:var(--gold);min-height:28px;margin-top:8px;"></div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="lb-panel">
+    <div class="sec-title" style="color:var(--accent)">🏆 LEADERBOARD</div>
+    <div id="lbList"></div>
+  </div>
+
+  <!-- Daily Challenges -->
+  <div class="dc-panel">
+    <div class="sec-title" style="color:var(--cyan)">⚡ DAILY CHALLENGES</div>
+    <div id="dcList"></div>
+    <div class="dc-refresh" id="dcRefresh">Refreshes at midnight</div>
+  </div>
+
+  <!-- Missions -->
+  <div class="ms-panel">
+    <div class="sec-title" style="color:var(--purple)">🎯 MISSIONS</div>
+    <div id="msList"></div>
+  </div>
+
+</div>
+
+<script>
+// ══════════ PERSISTENCE ══════════
+const LS = k => { try{ return localStorage.getItem(k); }catch(e){return null;} };
+const SS = (k,v) => { try{ localStorage.setItem(k, typeof v==='object'?JSON.stringify(v):String(v)); }catch(e){} };
+
+// ══════════ STATE ══════════
+let coins  = +LS('tr_coins')  || 60;
+let streak = +LS('tr_streak') || 0;
+let best   = +LS('tr_best')   || 0;
+let level  = +LS('tr_level')  || 1;
+let xp     = +LS('tr_xp')     || 0;
+let roundsPlayed = +LS('tr_rounds') || 0;
+let totalScore   = +LS('tr_tscore') || 0;
+let shopBuys     = +LS('tr_sbuys')  || 0;
+let spinUsed     = LS('tr_spindate') === new Date().toDateString();
+
+// ── Prestige ──
+let prestigeLevel = +LS('tr_prestige') || 0;   // number of rebirths
+// score & coin multiplier = 1 + prestigeLevel * 0.1
+function prestigeMult(){ return 1 + prestigeLevel * 0.1; }
+
+// ── Combo ──
+let comboCount   = 0;
+let comboTimer   = null;
+const COMBO_WINDOW = 400; // ms between taps to maintain combo
+const COMBO_MAX    = 10;
+
+// ── Random events (per round) ──
+let activeEvent = null; // { type, tapsLeft, data }
+
+// ── Daily Challenges ──
+const DC_POOL = [
+  { id:'dc_cashout80', text:'Cash out with 80+ points',     type:'cashout',   target:80,  reward:'+60 coins',  progress:0, done:false },
+  { id:'dc_combo8',    text:'Hit a 8× combo in a round',    type:'combo',     target:8,   reward:'+50 coins',  progress:0, done:false },
+  { id:'dc_norisk',    text:'Cash out below 40% risk',      type:'lowrisk',   target:1,   reward:'+45 coins',  progress:0, done:false },
+  { id:'dc_noitems',   text:'Cash out without using items', type:'noitems',   target:1,   reward:'+55 coins',  progress:0, done:false },
+  { id:'dc_streak4',   text:'Reach a 4× win streak',        type:'streak',    target:4,   reward:'+70 coins',  progress:0, done:false },
+  { id:'dc_survive3',  text:'Survive 3 rounds in a row',    type:'survive3',  target:3,   reward:'+40 coins',  progress:0, done:false },
+  { id:'dc_score150',  text:'Score 150+ points in one round',type:'cashout',  target:150, reward:'+80 coins',  progress:0, done:false },
+  { id:'dc_event',     text:'Trigger a random event',       type:'event',     target:1,   reward:'+35 coins',  progress:0, done:false },
+  { id:'dc_prestige',  text:'Use an item during a round',   type:'useditem',  target:1,   reward:'+30 coins',  progress:0, done:false },
+];
+
+function getTodayKey(){ return new Date().toDateString(); }
+
+let dcState = JSON.parse(LS('tr_dc') || 'null');
+if(!dcState || dcState.date !== getTodayKey()){
+  // Pick 3 random challenges for today
+  const shuffled = [...DC_POOL].sort(()=>Math.random()-.5);
+  dcState = { date: getTodayKey(), challenges: shuffled.slice(0,3).map(c=>({...c, progress:0, done:false})) };
+  SS('tr_dc', dcState);
+}
+let dailyChallenges = dcState.challenges;
+
+// per-round tracking for daily challenges
+let roundItemUsed   = false;
+let roundSurvivedCount = +LS('tr_survcount') || 0;
+
+let inv      = JSON.parse(LS('tr_inv')  || '{"shield":0,"slow":0,"reveal":0,"double":0,"ghost":0,"insurance":0}');
+let upgrades = JSON.parse(LS('tr_upgr') || '{"tapPower":0,"crashGuard":0,"coinBoost":0,"xpBoost":0}');
+let perks    = JSON.parse(LS('tr_perks')|| '{"autoShield":false,"streakSave":false,"luckyTap":false}');
+
+let lb = JSON.parse(LS('tr_lb') || 'null') || [
+  {name:'APEX_X',score:847},{name:'R1SK_IT',score:612},{name:'TAPPER_99',score:455},
+  {name:'YOU',score:0},{name:'GHOST',score:312}
+];
+
+let missions = JSON.parse(LS('tr_ms') || 'null') || [
+  {id:'m1',text:'Cash out 50+ points',type:'cashout',target:50,done:false,reward:'+25 coins',progress:0},
+  {id:'m2',text:'Survive 5 rounds',type:'rounds',target:5,done:false,reward:'+40 coins',progress:0},
+  {id:'m3',text:'Reach 3× streak',type:'streak',target:3,done:false,reward:'+1 Shield',progress:0},
+  {id:'m4',text:'Score 200 total points',type:'totalscore',target:200,done:false,reward:'+50 coins',progress:totalScore},
+  {id:'m5',text:'Buy 3 items from shop',type:'shopbuys',target:3,done:false,reward:'✨ Bonus XP',progress:shopBuys},
+];
+
+// Round state
+let score=0, taps=0, multiplier=1, riskLevel=0, gameActive=false;
+let crashPoint=0, crashTimer=null;
+let hbPts=[], hbInt=null;
+let activeEffects={};
+let insuranceUsed=false;
+let selectedPack='free';
+let currentShopTab='powerups';
+
+// ══════════ ITEM META ══════════
+const itemMeta = {
+  shield:    {name:'Safe Tap',  icon:'🛡', desc:'Blocks one crash (+2 grace taps)', cost:45, color:'#00f5d4',
+    tt:{ color:'#00f5d4', tag:'DEFENSIVE', tagClass:'good',
+      bullets:[
+        {c:'cyan',  t:'Automatically blocks the <b>next crash</b> event — you won\'t lose your score'},
+        {c:'cyan',  t:'After blocking, the shield breaks and grants <b>+2 bonus taps</b> of grace'},
+        {c:'gold',  t:'With 5–20 tap crash windows, use this early — don\'t wait until you\'re past 90%'},
+        {c:'purple',t:'Stack 2 shields for back-to-back protection on risky high-score pushes'},
+      ]}},
+  slow:      {name:'Slow Time', icon:'⏳', desc:'+6 crash taps grace',     cost:65, color:'#9b5de5',
+    tt:{ color:'#9b5de5', tag:'EXTENDER', tagClass:'power',
+      bullets:[
+        {c:'purple',t:'Instantly adds <b>+6 taps</b> to the hidden crash threshold'},
+        {c:'cyan',  t:'On a 10-tap window, +6 nearly doubles your scoring room'},
+        {c:'gold',  t:'<b>Best used immediately</b> at round start before any risk accumulates'},
+        {c:'purple',t:'Combine with Shield for maximum survivability on a single run'},
+      ]}},
+  reveal:    {name:'Risk Scan', icon:'🔍', desc:'Hints how close crash is', cost:35, color:'#ffd24d',
+    tt:{ color:'#ffd24d', tag:'INTEL', tagClass:'risky',
+      bullets:[
+        {c:'gold',  t:'Shows a <b>hint message</b> telling you how many taps remain before crash'},
+        {c:'cyan',  t:'"CRASH IMMINENT" = ≤5 taps left · "CLOSE" = ≤12 taps · "SAFE" = plenty of room'},
+        {c:'gold',  t:'<b>Best used</b> when the risk bar looks high — decide whether to cash out or push'},
+        {c:'red',   t:'Remember: it\'s a hint, not exact — the crash can still be unpredictable'},
+      ]}},
+  double:    {name:'Double Up', icon:'⚡', desc:'2× score for 8 seconds',   cost:100, color:'#ff3b3b',
+    tt:{ color:'#ff3b3b', tag:'SCORE BOOSTER', tagClass:'danger',
+      bullets:[
+        {c:'red',   t:'All taps score <b>2× points</b> for the next 8 seconds after activation'},
+        {c:'cyan',  t:'Stacks with your tap multiplier — at 50+ taps you get <b>10pts × 2 = 20pts/tap</b>'},
+        {c:'gold',  t:'<b>Best used</b> when you\'re already in the high-multiplier zone (50+ taps)'},
+        {c:'purple',t:'Combine with Slow Time to safely milk the full 8 seconds of double score'},
+      ]}},
+  ghost:     {name:'Ghost Tap', icon:'👻', desc:'Next tap ignores crash',   cost:120, color:'#9b5de5',
+    tt:{ color:'#9b5de5', tag:'ESCAPE CARD', tagClass:'power',
+      bullets:[
+        {c:'purple',t:'The <b>very next tap</b> after activation will pass through a crash event'},
+        {c:'cyan',  t:'One-time use — the ghost effect disappears after one tap regardless'},
+        {c:'gold',  t:'<b>Best used</b> when risk is near 100% and you want one final high-value tap'},
+        {c:'red',   t:'Risky move — after the ghost tap you\'re fully exposed again'},
+      ]}},
+  insurance: {name:'Insurance', icon:'🏦', desc:'Crash saves 50% coins',   cost:160, color:'#39ff14',
+    tt:{ color:'#39ff14', tag:'SAFETY NET', tagClass:'safe',
+      bullets:[
+        {c:'cyan',  t:'If you crash with Insurance active, you <b>keep 50% of your score</b> as coins'},
+        {c:'cyan',  t:'Works even if the crash timer fires — protects against both tap and time crashes'},
+        {c:'gold',  t:'<b>Best used</b> on high-stakes rounds where you\'re pushing for a record'},
+        {c:'purple',t:'Pair with the Streak Save perk to also protect your streak on the same crash'},
+      ]}},
+};
+
+// ══════════ UPGRADES / PERKS META ══════════
+const upgradesMeta = {
+  tapPower:   {name:'TAP POWER',   icon:'👊', desc:'+1 base pts per tap',      maxLv:5, baseCost:120,
+    tt:{ color:'#ff3b3b', tag:'PERMANENT', tagClass:'danger',
+      bullets:[
+        {c:'red',   t:'Adds <b>+1 base point</b> per tap permanently, on top of the scaling multiplier'},
+        {c:'gold',  t:'At max level (5) you get <b>+5 extra pts/tap</b> — massive late-game bonus'},
+        {c:'cyan',  t:'Combines with the ×3 multiplier: at Lv5 + 50 taps = <b>45 pts per tap!</b>'},
+        {c:'purple',t:'Highest ROI upgrade — priority buy before anything else'},
+      ]}},
+  crashGuard: {name:'CRASH GUARD', icon:'🏗',  desc:'+2 crash taps per level', maxLv:5, baseCost:140,
+    tt:{ color:'#00f5d4', tag:'PERMANENT', tagClass:'good',
+      bullets:[
+        {c:'cyan',  t:'Raises the <b>crash threshold</b> by +2 taps for every level'},
+        {c:'cyan',  t:'At max level (5): <b>+10 extra taps</b> — significant on tight 5–20 tap windows'},
+        {c:'gold',  t:'Most important upgrade — without it, Free Pack rounds are near unplayable'},
+        {c:'purple',t:'Priority #1 upgrade for any serious player'},
+      ]}},
+  coinBoost:  {name:'COIN BOOST',  icon:'💰', desc:'+8% coins per cashout',   maxLv:4, baseCost:180,
+    tt:{ color:'#ffd24d', tag:'PERMANENT', tagClass:'risky',
+      bullets:[
+        {c:'gold',  t:'Each level adds <b>+8% to your coin earnings</b> when you cash out'},
+        {c:'gold',  t:'At max level (4): <b>+32% more coins</b> — helps offset the tough economy'},
+        {c:'cyan',  t:'Stacks with streak multiplier for compounding coin gains'},
+        {c:'purple',t:'Expensive investment — buy after Crash Guard'},
+      ]}},
+  xpBoost:    {name:'XP BOOST',    icon:'📈', desc:'+15% XP per gain',         maxLv:4, baseCost:150,
+    tt:{ color:'#9b5de5', tag:'PERMANENT', tagClass:'power',
+      bullets:[
+        {c:'purple',t:'Adds <b>+15% to all XP gains</b> from cashouts, crashes, and bonus events'},
+        {c:'purple',t:'At max level (4): <b>+60% more XP</b> — level up significantly faster'},
+        {c:'gold',  t:'Each level-up rewards <b>+50 bonus coins</b> — XP Boost pays dividends'},
+        {c:'cyan',  t:'Prioritise this early to level up fast and unlock the coin rewards'},
+      ]}},
+};
+const perksMeta = {
+  autoShield: {name:'AUTO SHIELD', icon:'🤖', desc:'10% chance free shield each round', cost:350,
+    tt:{ color:'#00f5d4', tag:'PASSIVE PERK', tagClass:'good',
+      bullets:[
+        {c:'cyan',  t:'At the <b>start of every round</b>, there\'s a 10% chance you get a free Shield'},
+        {c:'cyan',  t:'The free shield goes straight into your inventory — use it whenever you want'},
+        {c:'gold',  t:'Over 10 rounds you\'ll average 1 free shield — worth ~25 coins saved'},
+        {c:'purple',t:'Pairs well with Crash Guard for extremely safe long rounds'},
+      ]}},
+  streakSave: {name:'STREAK SAVE', icon:'💾', desc:'On crash: streak −1, not reset',   cost:500,
+    tt:{ color:'#9b5de5', tag:'PASSIVE PERK', tagClass:'power',
+      bullets:[
+        {c:'purple',t:'When you crash, your streak <b>drops by 1</b> instead of resetting to 0'},
+        {c:'cyan',  t:'This means a 5× streak on crash becomes a 4× — you <b>keep the bonus</b>'},
+        {c:'gold',  t:'Most valuable at 3+ streak — protects your ×1.2x, ×1.5x, ×2.0x multipliers'},
+        {c:'red',   t:'Highest-cost perk but pays back enormously on long winning streaks'},
+      ]}},
+  luckyTap:   {name:'LUCKY TAP',   icon:'⭐', desc:'8% chance: 3× tap bonus',          cost:400,
+    tt:{ color:'#ffd24d', tag:'PASSIVE PERK', tagClass:'risky',
+      bullets:[
+        {c:'gold',  t:'Every tap has an <b>8% chance</b> to trigger a 3× bonus on that tap\'s score'},
+        {c:'gold',  t:'At 50+ taps that\'s up to <b>30 pts in one lucky tap</b> instead of 10'},
+        {c:'cyan',  t:'Lucky taps show a ⭐ floating number and a hint message so you know it fired'},
+        {c:'purple',t:'Combine with Double Up for lucky taps that score up to 60 pts each'},
+      ]}},
+};
+
+// ══════════ PACKS ══════════
+const packs = {
+  free:  {name:'FREE START', icon:'🎮', cost:0,   items:[], color:'var(--cyan)',  border:'rgba(0,245,212,0.25)', badge:null,
+    tt:{ color:'#00f5d4', tag:'NO COST', tagClass:'good',
+      who:'High risk — crashes come fast, no safety net',
+      bullets:[
+        {c:'cyan',  t:'No items — your skill and inventory are your only tools'},
+        {c:'cyan',  t:'Good when you already have shields or slow-time items stocked up'},
+        {c:'gold',  t:'Only viable with Crash Guard upgraded — base window is extremely tight'},
+        {c:'red',   t:'Crashes now hit after just 6–24 taps — you will crash often going in cold'},
+      ]}},
+  safe:  {name:'SAFE PACK',  icon:'🛡', cost:80,  items:[{k:'shield',n:2},{k:'slow',n:1}], color:'var(--cyan)', border:'rgba(0,245,212,0.35)', badge:'POPULAR',
+    tt:{ color:'#00f5d4', tag:'RECOMMENDED', tagClass:'good',
+      who:'Best starting pack — gives you a fighting chance',
+      bullets:[
+        {c:'cyan',  t:'<b>2× Safe Tap shields</b> — blocks two crash events before you lose score'},
+        {c:'purple',t:'<b>1× Slow Time</b> — adds +12 taps of breathing room immediately'},
+        {c:'gold',  t:'With tight crash windows, this pack is near-essential for new players'},
+        {c:'cyan',  t:'Aim to cash out before 80% risk — don\'t get greedy'},
+      ]}},
+  pro:   {name:'PRO PACK',   icon:'🔥', cost:150, items:[{k:'double',n:1},{k:'reveal',n:2},{k:'shield',n:1}], color:'var(--purple)', border:'rgba(155,93,229,0.4)', badge:'BEST VALUE',
+    tt:{ color:'#9b5de5', tag:'HIGH REWARD', tagClass:'power',
+      who:'For skilled players chasing the leaderboard',
+      bullets:[
+        {c:'red',   t:'<b>1× Double Up</b> — activate early in the ×2 zone before risk climbs'},
+        {c:'gold',  t:'<b>2× Risk Scan</b> — critical intel: know exactly when to bail'},
+        {c:'cyan',  t:'<b>1× Shield</b> — your last-resort safety net for a high-score push'},
+        {c:'purple',t:'Expensive but a clean run earns it back — requires sharp timing'},
+      ]}},
+  legend:{name:'LEGEND',     icon:'👑', cost:280, items:[{k:'ghost',n:1},{k:'insurance',n:1},{k:'double',n:2},{k:'slow',n:2}], color:'var(--gold)', border:'rgba(255,210,77,0.5)', badge:'ULTIMATE',
+    tt:{ color:'#ffd24d', tag:'MAXIMUM POWER', tagClass:'risky',
+      who:'Elite play only — requires perfect execution',
+      bullets:[
+        {c:'purple',t:'<b>2× Slow Time</b> — essential: stack both for +24 taps of extra window'},
+        {c:'red',   t:'<b>2× Double Up</b> — up to 16 seconds of 2× scoring if timed correctly'},
+        {c:'gold',  t:'<b>1× Insurance</b> — if you crash, 50% of score saved as coins'},
+        {c:'cyan',  t:'<b>1× Ghost Tap</b> — one free pass through a crash at peak risk'},
+        {c:'gold',  t:'Costs 280 coins — you need a near-perfect run to profit'},
+      ]}},
+};
+
+// ══════════ INIT ══════════
+function init(){
+  const dr=document.getElementById('dotsRow');
+  for(let i=0;i<12;i++){const d=document.createElement('div');d.className='dot';d.id='dot'+i;dr.appendChild(d);}
+  hbPts=Array(40).fill(18); renderHb();
+  registerAllTooltips();
+  updateUI(); renderLb(); renderMissions(); renderShopTab(); renderDailyChallenges();
+  setIdleUI(true);
+  setTimeout(openPreModal, 350);
+}
+
+// ══════════ TOOLTIP ENGINE ══════════
+const ttRegistry = {};
+function ttRegister(key, data){ ttRegistry[key] = data; }
+
+function ttBuildHTML(d){
+  if(!d) return '';
+  const bullets = (d.bullets||[]).map(b=>`
+    <div class="tt-row">
+      <span class="tt-bullet ${b.c==='red'?'red':b.c==='gold'?'gold':b.c==='purple'?'purple':''}">▸</span>
+      <span>${b.t}</span>
+    </div>`).join('');
+  const who = d.who ? `<div class="tt-who">${d.who}</div>` : '';
+  return `
+    <div class="tt-header">
+      <div class="tt-title" style="color:${d.color||'#fff'}">${d.icon||''} ${d.name||''}</div>
+    </div>
+    ${who}
+    <div class="tt-body">${bullets}</div>
+    ${d.tag ? `<div class="tt-tag ${d.tagClass||'good'}">${d.tag}</div>` : ''}`;
+}
+
+(function initTooltipEngine(){
+  const box = document.getElementById('tt-global');
+  let hideTimer = null;
+
+  function show(trigger){
+    const key = trigger.getAttribute('data-tt');
+    const data = ttRegistry[key];
+    if(!data) return;
+    clearTimeout(hideTimer);
+
+    box.innerHTML = ttBuildHTML(data);
+    box.style.display = 'block';
+    box.className = '';
+
+    requestAnimationFrame(()=>{
+      const tr = trigger.getBoundingClientRect();
+      const bw = box.offsetWidth  || 240;
+      const bh = box.offsetHeight || 200;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const gap = 12;
+
+      let top, left, arrClass;
+
+      // Prefer above, fall back to below
+      if(tr.top - bh - gap >= 8){
+        top = tr.top - bh - gap;
+        arrClass = 'arr-bottom';
+      } else {
+        top = tr.bottom + gap;
+        arrClass = 'arr-top';
+      }
+
+      // Clamp top so it never goes off screen
+      top = Math.max(8, Math.min(top, vh - bh - 8));
+
+      // Centre horizontally on trigger, then clamp
+      left = tr.left + tr.width / 2 - bw / 2;
+      left = Math.max(8, Math.min(left, vw - bw - 8));
+
+      // Point arrow to the centre of the trigger element
+      const arrowX = (tr.left + tr.width / 2) - left;
+      const clampedArrowX = Math.max(14, Math.min(arrowX, bw - 14));
+      box.style.setProperty('--arr-x', clampedArrowX + 'px');
+
+      box.style.top  = top  + 'px';
+      box.style.left = left + 'px';
+      box.classList.add(arrClass);
+    });
+  }
+
+  function hide(){
+    hideTimer = setTimeout(()=>{ box.style.display = 'none'; }, 100);
+  }
+
+  // Inject arrow position via CSS var
+  const s = document.createElement('style');
+  s.textContent = `
+    #tt-global.arr-bottom::before { left: var(--arr-x, 50%); margin-left:-4px; }
+    #tt-global.arr-top::before    { left: var(--arr-x, 50%); margin-left:-4px; }
+  `;
+  document.head.appendChild(s);
+
+  document.addEventListener('mouseover', e=>{
+    const t = e.target.closest('[data-tt]');
+    if(t) show(t);
+  });
+  document.addEventListener('mouseout', e=>{
+    const t = e.target.closest('[data-tt]');
+    if(t) hide();
+  });
+  document.addEventListener('scroll', ()=>{ box.style.display='none'; }, true);
+})();
+
+function registerAllTooltips(){
+  Object.entries(itemMeta).forEach(([k,m])=>{
+    if(m.tt) ttRegister('item-'+k, {...m.tt, icon:m.icon, name:m.name});
+  });
+  Object.entries(upgradesMeta).forEach(([k,m])=>{
+    if(m.tt) ttRegister('upgr-'+k, {...m.tt, icon:m.icon, name:m.name});
+  });
+  Object.entries(perksMeta).forEach(([k,m])=>{
+    if(m.tt) ttRegister('perk-'+k, {...m.tt, icon:m.icon, name:m.name});
+  });
+  Object.entries(packs).forEach(([id,p])=>{
+    if(p.tt) ttRegister('pack-'+id, {...p.tt, icon:p.icon, name:p.name});
+  });
+}
+
+// ══════════ PRE-ROUND MODAL ══════════
+function openPreModal(isCrash, scoreVal, earnedVal, streakMult){
+  const inner=document.getElementById('preModalInner');
+  const hasResult = isCrash !== undefined;
+
+  let resultHTML='';
+  if(hasResult){
+    if(isCrash){
+      resultHTML=`<div class="result-hero"><div class="result-icon">💥</div><div class="result-title crash">CRASHED!</div></div>
+        <div class="result-stats">
+          <div class="rs-card"><div class="rs-val">${scoreVal}</div><div class="rs-lbl">SCORE LOST</div></div>
+          <div class="rs-card"><div class="rs-val" style="color:var(--accent)">0</div><div class="rs-lbl">COINS EARNED</div></div>
+        </div>`;
+    } else {
+      resultHTML=`<div class="result-hero"><div class="result-icon">✅</div><div class="result-title win">CASHED OUT!</div></div>
+        <div class="result-stats">
+          <div class="rs-card"><div class="rs-val">${scoreVal}</div><div class="rs-lbl">POINTS</div></div>
+          <div class="rs-card"><div class="rs-val">+${earnedVal}🪙</div><div class="rs-lbl">EARNED</div></div>
+          ${streakMult>1?`<div class="rs-card" style="grid-column:1/-1"><div class="rs-val" style="color:var(--purple)">×${streakMult.toFixed(1)} STREAK BONUS</div><div class="rs-lbl">APPLIED</div></div>`:''}
+          ${prestigeLevel>0?`<div class="rs-card" style="grid-column:1/-1"><div class="rs-val" style="color:var(--gold)">✨ ×${prestigeMult().toFixed(1)} PRESTIGE MULT</div><div class="rs-lbl">ACTIVE</div></div>`:''}
+        </div>`;
+    }
+  }
+
+  const invItems=Object.entries(inv).filter(([k,v])=>v>0);
+  const invHTML=invItems.length?`
+    <div style="margin-bottom:14px;">
+      <div class="packs-label">YOUR INVENTORY</div>
+      <div class="inv-row">
+        ${invItems.map(([k,v])=>`
+          <div class="inv-chip" data-tt="item-${k}" style="cursor:help;">
+            ${itemMeta[k].icon} ${itemMeta[k].name} <span class="qty">×${v}</span>
+          </div>`).join('')}
+      </div>
+    </div>`:'';
+
+  inner.innerHTML=`
+    <div class="modal-header">
+      <div class="modal-title">${hasResult?(isCrash?'💀 TRY AGAIN':'🏆 NEXT ROUND'):'🚀 START ROUND'}</div>
+      <button class="modal-close" onclick="closePreModal()">✕</button>
+    </div>
+    ${resultHTML}
+    ${invHTML}
+    <div class="packs-label" style="display:flex;align-items:center;gap:6px;">
+      CHOOSE STARTER PACK
+      <span style="font-size:9px;color:var(--muted);">· hover for details</span>
+    </div>
+    <div class="packs-grid">
+      ${Object.entries(packs).map(([id,p])=>`
+        <div class="pack-card ${selectedPack===id?'selected':''}"
+             style="border-color:${p.border};"
+             data-tt="pack-${id}"
+             onclick="selectPack('${id}')">
+          ${p.badge?`<div class="pack-badge">${p.badge}</div>`:''}
+          <div class="pack-icon">${p.icon}</div>
+          <div class="pack-name" style="color:${p.color}">${p.name}</div>
+          <div class="pack-items">${p.items.length?p.items.map(i=>`${itemMeta[i.k].icon} ${itemMeta[i.k].name} ×${i.n}`).join('<br>'):'No extras<br><span style="color:#00f5d4">Pure skill!</span>'}</div>
+          <div class="${p.cost===0?'pack-free':'pack-cost'}">${p.cost===0?'✅ FREE':'🪙 '+p.cost}</div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:9px;color:var(--muted);text-align:center;margin-bottom:14px;">
+      You have <span style="color:var(--gold);font-weight:700">${coins}</span> coins
+    </div>
+    <button class="modal-btn go" onclick="confirmStart()">⚡ START ROUND</button>
+    <button class="modal-btn cyan" onclick="closePreModal();openShop()">🛒 SHOP FIRST</button>
+    ${hasResult?`<button class="modal-btn gold" onclick="closePreModal()">⬅ BACK TO GAME</button>`:''}
+  `;
+
+  document.getElementById('preModal').classList.add('show');
+}
+
+function closePreModal(){ document.getElementById('preModal').classList.remove('show'); }
+
+function selectPack(id){
+  selectedPack=id;
+  document.querySelectorAll('.pack-card').forEach((el,i)=>{
+    const pid=Object.keys(packs)[i];
+    el.classList.toggle('selected',pid===id);
+  });
+}
+
+function confirmStart(){
+  const pack=packs[selectedPack];
+  if(pack.cost>coins){
+    const btn=document.querySelector('#preModalInner .modal-btn.go');
+    btn.textContent='⚠️ NOT ENOUGH COINS!'; btn.style.background='#555';
+    setTimeout(()=>{btn.textContent='⚡ START ROUND';btn.style.background='';},1500);
+    return;
+  }
+  coins-=pack.cost;
+  pack.items.forEach(item=>{inv[item.k]=(inv[item.k]||0)+item.n;});
+  saveAll(); closePreModal(); startGame();
+}
+
+// ══════════ IDLE UI ══════════
+function setIdleUI(idle){
+  const sb  = document.getElementById('inPanelStartBtn');
+  const fab = document.getElementById('fab');
+  sb.style.display  = idle ? 'block' : 'none';
+  fab.style.display = idle ? 'flex'  : 'none';
+  if(idle) document.getElementById('hintText').textContent = 'TAP ▶ START ROUND OR USE THE RED BUTTON!';
+}
+
+// ══════════ GAME ══════════
+function startGame(){
+  score=0; taps=0; multiplier=1; riskLevel=0; insuranceUsed=false; activeEffects={};
+  hbPts=Array(40).fill(18);
+  comboCount=0; clearTimeout(comboTimer); comboTimer=null;
+  activeEvent=null; roundItemUsed=false;
+
+  // HARD MODE: crash between 5–20 taps base
+  const base = 5 + Math.random() * 15;
+  crashPoint = Math.floor(base + (upgrades.crashGuard||0) * 2);
+
+  // Auto shield perk (8% chance)
+  if(perks.autoShield && Math.random() < 0.08){ inv.shield++; }
+
+  // 20% chance of a random event
+  if(Math.random() < 0.20){ scheduleRandomEvent(); }
+
+  gameActive=true;
+
+  document.getElementById('scoreVal').textContent='0';
+  document.getElementById('scoreVal').className='score-val';
+  document.getElementById('multBadge').textContent='×1.0';
+  document.getElementById('bonusBadge').style.display='none';
+  document.getElementById('riskBar').style.width='0%';
+  document.getElementById('riskPct').textContent='0%';
+  document.getElementById('hintText').textContent='TAP TO SCORE — CASH OUT BEFORE CRASH!';
+  document.getElementById('activePus').innerHTML='';
+  updateComboUI();
+  setDots(0,false);
+  renderInvButtons();
+  startHb();
+
+  document.getElementById('tapBtn').disabled=false;
+  document.getElementById('cashoutBtn').disabled=false;
+  setIdleUI(false);
+
+  // Time crash: 3–6 seconds
+  crashTimer=setTimeout(()=>{if(gameActive)crash();}, 3000 + Math.random()*3000);
+}
+
+function onTap(e){
+  if(!gameActive) return;
+  taps++;
+  riskLevel=Math.min(100,(taps/crashPoint)*100);
+
+  // ── Combo logic ──
+  clearTimeout(comboTimer);
+  comboCount = Math.min(comboCount + 1, COMBO_MAX);
+  comboTimer = setTimeout(()=>{ comboCount=0; updateComboUI(); }, COMBO_WINDOW);
+  updateComboUI();
+
+  // ── Score calc ──
+  const tp = upgrades.tapPower||0;
+  let base = (taps<10?1:taps<25?2:taps<50?5:10)+tp;
+
+  // Combo bonus: ×1.5 at 5+, ×2 at max (10)
+  const comboMult = comboCount >= COMBO_MAX ? 2.0 : comboCount >= 5 ? 1.5 : 1.0;
+  if(comboCount >= 5) base = Math.floor(base * comboMult);
+
+  // Event: FEVER — tap bonus
+  let eventBonus = 1;
+  if(activeEvent && activeEvent.type==='fever' && activeEvent.tapsLeft > 0){
+    eventBonus = 3; activeEvent.tapsLeft--;
+    if(activeEvent.tapsLeft <= 0){ activeEvent=null; updateApuChips(); }
+  }
+
+  let bonus=0;
+  if(perks.luckyTap&&Math.random()<0.08) bonus=base*2;
+  let pts = (activeEffects.double?(base+bonus)*2:base+bonus) * eventBonus;
+
+  // Prestige multiplier applied to scoring
+  pts = Math.floor(pts * prestigeMult());
+
+  score+=pts; totalScore+=pts;
+
+  multiplier=taps<10?1.0:taps<25?1.5:taps<50?2.0:3.0;
+  document.getElementById('multBadge').textContent='×'+multiplier.toFixed(1);
+
+  const sv=document.getElementById('scoreVal');
+  sv.textContent=score;
+  const cls = riskLevel>70?'danger':riskLevel>40?'warn':'safe';
+  sv.className='score-val pop '+cls+(prestigeLevel>0?' prestige-glow':'');
+  setTimeout(()=>sv.classList.remove('pop'),150);
+
+  document.getElementById('riskBar').style.width=riskLevel+'%';
+  document.getElementById('riskPct').textContent=Math.floor(riskLevel)+'%';
+  setDots(Math.floor((riskLevel/100)*12),riskLevel>75);
+
+  if(riskLevel>80) document.getElementById('hintText').textContent='🚨 DANGER ZONE — CASH OUT NOW!';
+  else if(riskLevel>55) document.getElementById('hintText').textContent='⚠️ GETTING RISKY — STAY COOL';
+  else if(comboCount>=COMBO_MAX) document.getElementById('hintText').textContent='🔥 MAX COMBO! ×2 SCORE!';
+  else if(comboCount>=5) document.getElementById('hintText').textContent='⚡ COMBO ×'+comboCount+'! KEEP TAPPING!';
+  else if(bonus) document.getElementById('hintText').textContent='⭐ LUCKY TAP! BONUS!';
+
+  const floatTxt = comboCount>=5 ? `+${pts}🔥` : bonus ? `+${pts}⭐` : `+${pts}`;
+  spawnFloat(e, floatTxt);
+  createRipple(e,document.getElementById('tapBtn'));
+  addHbSpike();
+
+  // Daily challenge: combo
+  checkDailyChallenge('combo', comboCount);
+
+  if(activeEffects.ghost){delete activeEffects.ghost;updateApuChips();return;}
+
+  if(taps>=crashPoint){
+    if(activeEffects.shield){
+      delete activeEffects.shield;
+      crashPoint+=2;
+      document.getElementById('hintText').textContent='🛡 SHIELD SAVED YOU! +2 TAPS GRACE!';
+      updateApuChips();
+    } else { crash(); }
+  }
+}
+
+function cashOut(){
+  if(!gameActive) return;
+  clearTimeout(crashTimer); stopHb(); gameActive=false;
+  comboCount=0; clearTimeout(comboTimer); updateComboUI();
+
+  const sM=getStreakMult();
+  const cB=1+(upgrades.coinBoost||0)*0.08;
+  const xB=1+(upgrades.xpBoost||0)*0.15;
+  let earned=Math.floor(score * sM * cB * 0.35 * prestigeMult());
+
+  // Event: COIN RAIN bonus
+  if(activeEvent && activeEvent.type==='coinrain'){
+    earned += activeEvent.data.bonus;
+    showEventToast({type:'rain', icon:'🪙', title:'COIN RAIN PAID OUT!', desc:`+${activeEvent.data.bonus} bonus coins collected!`});
+  }
+  activeEvent=null;
+
+  coins+=earned; streak++; roundsPlayed++;
+  roundSurvivedCount++;
+  SS('tr_survcount', roundSurvivedCount);
+  gainXP(Math.floor((score+streak*3)*xB));
+  if(score>best) best=score;
+
+  // Daily challenge checks
+  checkDailyChallenge('cashout', score);
+  checkDailyChallenge('streak', streak);
+  checkDailyChallenge('survive3', roundSurvivedCount);
+  if(riskLevel < 40) checkDailyChallenge('lowrisk', 1);
+  if(!roundItemUsed)  checkDailyChallenge('noitems', 1);
+  if(roundItemUsed)   checkDailyChallenge('useditem', 1);
+
+  checkMissions('cashout',score);
+  checkMissions('rounds',roundsPlayed);
+  checkMissions('streak',streak);
+  checkMissions('totalscore',totalScore);
+  updateLb(score);
+  saveAll(); updateUI(); renderLb(); renderMissions(); renderDailyChallenges();
+
+  document.getElementById('tapBtn').disabled=true;
+  document.getElementById('cashoutBtn').disabled=true;
+  document.getElementById('invBtnRow').innerHTML='';
+  setIdleUI(true);
+  openPreModal(false,score,earned,sM);
+}
+
+function crash(){
+  if(!gameActive) return;
+  comboCount=0; clearTimeout(comboTimer); updateComboUI();
+  activeEvent=null;
+
+  if(activeEffects.insurance&&!insuranceUsed){
+    insuranceUsed=true; delete activeEffects.insurance;
+    const saved=Math.floor(score*0.5);
+    coins+=saved; updateApuChips();
+    clearTimeout(crashTimer); stopHb(); gameActive=false;
+    gainXP(5);
+    if(!perks.streakSave) streak=0; else streak=Math.max(0,streak-1);
+    roundsPlayed++;
+    roundSurvivedCount=0; SS('tr_survcount',0);
+    saveAll(); updateUI(); renderMissions(); renderDailyChallenges();
+    document.getElementById('tapBtn').disabled=true;
+    document.getElementById('cashoutBtn').disabled=true;
+    document.getElementById('invBtnRow').innerHTML='';
+    setIdleUI(true);
+    openPreModal(true,score,saved,1);
+    return;
+  }
+
+  clearTimeout(crashTimer); stopHb(); gameActive=false;
+  document.getElementById('mainPanel').classList.add('shake');
+  setTimeout(()=>document.getElementById('mainPanel').classList.remove('shake'),500);
+
+  if(!perks.streakSave) streak=0; else streak=Math.max(0,streak-1);
+  roundsPlayed++;
+  roundSurvivedCount=0; SS('tr_survcount',0);
+  gainXP(2);
+  checkMissions('rounds',roundsPlayed);
+  saveAll(); updateUI(); renderMissions(); renderDailyChallenges();
+
+  document.getElementById('tapBtn').disabled=true;
+  document.getElementById('cashoutBtn').disabled=true;
+  document.getElementById('invBtnRow').innerHTML='';
+  setIdleUI(true);
+  openPreModal(true,score,0,1);
+}
+
+// ══════════ IN-GAME ITEMS ══════════
+function useItem(k){
+  if(!gameActive||inv[k]<=0) return;
+  inv[k]--; SS('tr_inv',inv);
+  roundItemUsed = true;
+  checkDailyChallenge('useditem', 1);
+  switch(k){
+    case 'shield':
+      activeEffects.shield=true;
+      document.getElementById('hintText').textContent='🛡 SHIELD ACTIVE — ONE CRASH BLOCKED!';
+      break;
+    case 'slow':
+      crashPoint+=6;
+      document.getElementById('hintText').textContent='⏳ CRASH DELAYED! +6 TAPS ADDED!';
+      break;
+    case 'reveal':
+      const rem=Math.max(0,crashPoint-taps);
+      document.getElementById('hintText').textContent=rem<=5?'🔍 CRASH IMMINENT! CASH OUT!':rem<=12?'🔍 GETTING CLOSE...':'🔍 STILL SAFE — KEEP TAPPING!';
+      break;
+    case 'double':
+      activeEffects.double=true;
+      document.getElementById('hintText').textContent='⚡ DOUBLE SCORE ACTIVE FOR 8s!';
+      let dt=8;
+      const di=setInterval(()=>{dt--;if(dt<=0){delete activeEffects.double;updateApuChips();clearInterval(di);}},1000);
+      break;
+    case 'ghost':
+      activeEffects.ghost=true;
+      document.getElementById('hintText').textContent='👻 GHOST READY — NEXT TAP IGNORES CRASH!';
+      break;
+    case 'insurance':
+      activeEffects.insurance=true;
+      document.getElementById('hintText').textContent='🏦 INSURANCE ON — CRASH SAVES 50% COINS!';
+      break;
+  }
+  updateApuChips();
+  renderInvButtons();
+  updateUI();
+}
+
+function updateApuChips(){
+  const c=document.getElementById('activePus');
+  let html = Object.keys(activeEffects).map(k=>`<div class="apu-chip">${itemMeta[k].icon} ${itemMeta[k].name} ACTIVE</div>`).join('');
+  if(activeEvent){
+    if(activeEvent.type==='fever')    html += `<div class="event-chip">🔥 FEVER ×3 (${activeEvent.tapsLeft} taps)</div>`;
+    if(activeEvent.type==='coinrain') html += `<div class="event-chip">🪙 COIN RAIN ACTIVE</div>`;
+  }
+  c.innerHTML = html;
+}
+
+function renderInvButtons(){
+  const row=document.getElementById('invBtnRow');
+  row.innerHTML='';
+  const items=Object.entries(inv).filter(([k,v])=>v>0);
+  if(!items.length) return;
+  items.forEach(([k,v])=>{
+    const m=itemMeta[k];
+    const btn=document.createElement('button');
+    btn.className='inv-btn';
+    btn.style.color=m.color;
+    btn.innerHTML=`<span class="ib-icon">${m.icon}</span>${m.name}<div class="ib-qty">×${v}</div>`;
+    btn.onclick=()=>useItem(k);
+    row.appendChild(btn);
+  });
+}
+
+// ══════════ SHOP ══════════
+function openShop(){
+  document.getElementById('shopCoinDisplay').textContent=coins;
+  renderShopTab();
+  document.getElementById('shopModal').classList.add('show');
+}
+function closeShop(){ document.getElementById('shopModal').classList.remove('show'); updateUI(); }
+
+function shopTab(tab,btn){
+  currentShopTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderShopTab();
+}
+
+function renderShopTab(){
+  const c=document.getElementById('shopTabContent');
+  if(!c) return;
+  if(currentShopTab==='powerups'){
+    c.innerHTML=`
+      <div style="font-size:9px;color:var(--muted);margin-bottom:10px;">· Hover any item for full details</div>
+      <div class="shop-grid">${Object.entries(itemMeta).map(([k,m])=>`
+        <div class="shop-item" data-tt="item-${k}" onclick="buyItem('${k}')">
+          <div class="si-icon">${m.icon}</div>
+          <div class="si-name">${m.name}</div>
+          <div class="si-desc">${m.desc}</div>
+          <div style="font-size:9px;color:var(--cyan);margin-top:2px;">In bag: ×${inv[k]||0}</div>
+          <div class="si-cost">🪙 ${m.cost}</div>
+        </div>`).join('')}</div>`;
+  } else if(currentShopTab==='upgrades'){
+    c.innerHTML=`
+      <div style="font-size:9px;color:var(--muted);margin-bottom:10px;">· Hover any upgrade for details</div>
+      <div class="shop-grid">${Object.entries(upgradesMeta).map(([k,m])=>{
+        const lv=upgrades[k]||0, maxed=lv>=m.maxLv;
+        const cost=m.baseCost+Math.floor(lv*m.baseCost*0.5);
+        return `<div class="shop-item ${maxed?'maxed':''}" data-tt="upgr-${k}" onclick="${maxed?'':'buyUpgrade(\''+k+'\')'}">
+          <div class="si-level">LV ${lv}/${m.maxLv}</div>
+          <div class="si-icon">${m.icon}</div>
+          <div class="si-name">${m.name}</div>
+          <div class="si-desc">${m.desc}</div>
+          <div class="${maxed?'si-owned':'si-cost'}">${maxed?'✅ MAXED':'🪙 '+cost}</div>
+        </div>`;}).join('')}</div>`;
+  } else {
+    c.innerHTML=`
+      <div style="font-size:9px;color:var(--muted);margin-bottom:10px;">· Hover any perk for details</div>
+      <div class="shop-grid">${Object.entries(perksMeta).map(([k,m])=>{
+        const owned=perks[k];
+        return `<div class="shop-item ${owned?'owned':''}" data-tt="perk-${k}" onclick="${owned?'':'buyPerk(\''+k+'\')'}">
+          <div class="si-icon">${m.icon}</div>
+          <div class="si-name">${m.name}</div>
+          <div class="si-desc">${m.desc}</div>
+          <div class="${owned?'si-owned':'si-cost'}">${owned?'✅ UNLOCKED':'🪙 '+m.cost}</div>
+        </div>`;}).join('')}</div>`;
+  }
+}
+
+function buyItem(k){
+  if(coins<itemMeta[k].cost){flashCoin();return;}
+  coins-=itemMeta[k].cost; inv[k]=(inv[k]||0)+1;
+  trackShopBuy(); saveAll();
+  document.getElementById('shopCoinDisplay').textContent=coins;
+  renderShopTab(); updateUI();
+}
+function buyUpgrade(k){
+  const lv=upgrades[k]||0;
+  if(lv>=upgradesMeta[k].maxLv) return;
+  const cost=upgradesMeta[k].baseCost+Math.floor(lv*upgradesMeta[k].baseCost*0.5);
+  if(coins<cost){flashCoin();return;}
+  coins-=cost; upgrades[k]=lv+1;
+  trackShopBuy(); saveAll();
+  document.getElementById('shopCoinDisplay').textContent=coins;
+  renderShopTab(); updateUI();
+}
+function buyPerk(k){
+  if(coins<perksMeta[k].cost||perks[k]){if(coins<perksMeta[k].cost)flashCoin();return;}
+  coins-=perksMeta[k].cost; perks[k]=true;
+  trackShopBuy(); saveAll();
+  document.getElementById('shopCoinDisplay').textContent=coins;
+  renderShopTab(); updateUI();
+}
+function trackShopBuy(){
+  shopBuys++; SS('tr_sbuys',shopBuys);
+  checkMissions('shopbuys',shopBuys);
+}
+function flashCoin(){
+  const el=document.getElementById('shopCoinDisplay');
+  el.style.color='var(--accent)';
+  setTimeout(()=>el.style.color='var(--gold)',700);
+}
+
+// ══════════ DAILY SPIN ══════════
+const spinPrizes=[
+  {label:'10 Coins 🪙',  fn:()=>{coins+=10;saveAll();updateUI();}},
+  {label:'1× Shield 🛡',  fn:()=>{inv.shield++;SS('tr_inv',inv);updateUI();}},
+  {label:'25 Coins 🪙',  fn:()=>{coins+=25;saveAll();updateUI();}},
+  {label:'1× Slow ⏳',   fn:()=>{inv.slow++;SS('tr_inv',inv);updateUI();}},
+  {label:'50 Coins 🪙',  fn:()=>{coins+=50;saveAll();updateUI();}},
+  {label:'1× Reveal 🔍', fn:()=>{inv.reveal++;SS('tr_inv',inv);updateUI();}},
+  {label:'20 XP 📈',     fn:()=>{gainXP(20);}},
+  {label:'JACKPOT! 120🪙',fn:()=>{coins+=120;saveAll();updateUI();}},
+];
+let spinning=false;
+
+function doSpin(){
+  if(spinUsed||spinning) return;
+  spinning=true;
+  document.getElementById('spinBtn').disabled=true;
+  document.getElementById('spinResult').textContent='';
+  const idx=Math.floor(Math.random()*spinPrizes.length);
+  const el=document.getElementById('spinWheelEl');
+  let deg=0, step=42;
+  const animate=()=>{
+    deg+=step; step*=0.965;
+    el.style.transform=`rotate(${deg}deg)`;
+    if(step>0.8){ requestAnimationFrame(animate); }
+    else {
+      spinPrizes[idx].fn();
+      document.getElementById('spinCenter').textContent=spinPrizes[idx].label;
+      document.getElementById('spinResult').textContent='🎉 '+spinPrizes[idx].label;
+      spinUsed=true; SS('tr_spindate',new Date().toDateString());
+      spinning=false; updateUI();
+    }
+  };
+  document.getElementById('spinCenter').textContent='...';
+  requestAnimationFrame(animate);
+}
+
+// ══════════ HELPERS ══════════
+function getStreakMult(){ return streak>=7?2.0:streak>=5?1.5:streak>=3?1.2:1.0; }
+function xpForNext(lv){ return 100+(lv-1)*80; }
+function gainXP(amount){
+  xp+=amount;
+  const needed=xpForNext(level);
+  if(xp>=needed){ xp-=needed; level++; coins+=50; }
+  SS('tr_xp',xp); SS('tr_level',level);
+}
+function setDots(n,hot){
+  for(let i=0;i<12;i++){const d=document.getElementById('dot'+i);d.className='dot '+(i<n?(hot?'hot':'on'):'');}
+}
+function startHb(){
+  hbInt=setInterval(()=>{hbPts.shift();hbPts.push(18+Math.random()*5-2.5);renderHb();},100);
+}
+function stopHb(){clearInterval(hbInt);}
+function addHbSpike(){hbPts[hbPts.length-2]=36-riskLevel*0.22;hbPts[hbPts.length-1]=18+Math.random()*4-2;renderHb();}
+function renderHb(){
+  const pts=hbPts.map((y,i)=>`${i*10},${y}`).join(' ');
+  document.getElementById('hbLine').setAttribute('points',pts);
+  const col=riskLevel>70?'#ff3b3b':riskLevel>40?'#ffd24d':'#00f5d4';
+  document.getElementById('hbLine').setAttribute('stroke',col);
+}
+function spawnFloat(e,txt){
+  const el=document.createElement('div'); el.className='float-pts'; el.textContent=txt;
+  const r=document.getElementById('tapBtn').getBoundingClientRect();
+  el.style.left=(r.left+r.width/2+Math.random()*50-25)+'px';
+  el.style.top=(r.top-10)+'px';
+  document.body.appendChild(el); setTimeout(()=>el.remove(),800);
+}
+function createRipple(e,btn){
+  const rp=document.createElement('div'); rp.className='ripple';
+  const r=btn.getBoundingClientRect(), sz=Math.max(r.width,r.height);
+  rp.style.width=rp.style.height=sz+'px';
+  rp.style.left=(e.clientX-r.left-sz/2)+'px';
+  rp.style.top=(e.clientY-r.top-sz/2)+'px';
+  btn.appendChild(rp); setTimeout(()=>rp.remove(),600);
+}
+
+// ══════════ LEADERBOARD ══════════
+function updateLb(s){ const you=lb.find(x=>x.name==='YOU'); if(you&&s>you.score)you.score=s; lb.sort((a,b)=>b.score-a.score); SS('tr_lb',lb); }
+function renderLb(){
+  document.getElementById('lbList').innerHTML=lb.slice(0,5).map((e,i)=>{
+    const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const rk=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    return `<div class="lb-row"><div class="lb-rank ${rc}">${rk}</div><div class="lb-name">${e.name}</div><div class="lb-score">${e.score}</div></div>`;
+  }).join('');
+}
+
+// ══════════ MISSIONS ══════════
+function checkMissions(type,val){
+  missions.forEach(m=>{
+    if(m.done) return;
+    if(m.type===type){
+      m.progress=val;
+      if(val>=m.target){
+        m.done=true;
+        if(m.reward.includes('25')) coins+=25;
+        else if(m.reward.includes('40')) coins+=40;
+        else if(m.reward.includes('50')) coins+=50;
+        else if(m.reward.includes('Shield')) inv.shield++;
+        saveAll();
+      }
+    }
+  });
+  SS('tr_ms',missions);
+}
+function renderMissions(){
+  document.getElementById('msList').innerHTML=missions.map(m=>`
+    <div class="ms-item">
+      <div class="ms-dot ${m.done?'done':''}"></div>
+      <div class="ms-text">${m.text}${!m.done&&m.progress?` (${m.progress}/${m.target})`:''}${m.done?' ✅':''}</div>
+      <div class="ms-rew">${m.done?'DONE':m.reward}</div>
+    </div>`).join('');
+}
+
+// ══════════ COMBO SYSTEM ══════════
+function updateComboUI(){
+  const bar    = document.getElementById('comboBar');
+  const badge  = document.getElementById('comboBadge');
+  const pct    = (comboCount / COMBO_MAX) * 100;
+  bar.style.width = pct + '%';
+  if(comboCount >= 2){
+    badge.className = 'combo-badge visible' + (comboCount >= COMBO_MAX ? ' maxed' : '');
+    badge.textContent = comboCount >= COMBO_MAX ? '🔥 MAX COMBO ×2!' : `COMBO ×${comboCount}`;
+  } else {
+    badge.className = 'combo-badge';
+  }
+}
+
+// ══════════ RANDOM EVENT SYSTEM ══════════
+const EVENTS = [
+  { type:'fever',   icon:'🔥', title:'FEVER MODE!',      desc:'Next 5 taps score ×3 points!',            theme:'fever',
+    apply(){ activeEvent={type:'fever',tapsLeft:5}; checkDailyChallenge('event',1); } },
+  { type:'cursed',  icon:'💀', title:'CURSED!',           desc:'Crash window just got tighter!',           theme:'cursed',
+    apply(){ crashPoint=Math.max(1,crashPoint-3); checkDailyChallenge('event',1); } },
+  { type:'coinrain',icon:'🪙', title:'COIN RAIN!',        desc:'Survive and collect +20 bonus coins!',     theme:'rain',
+    apply(){ activeEvent={type:'coinrain',data:{bonus:20}}; checkDailyChallenge('event',1); } },
+  { type:'luck',    icon:'🍀', title:'LUCKY ROUND!',      desc:'Crash guard +3 taps this round!',          theme:'luck',
+    apply(){ crashPoint+=3; checkDailyChallenge('event',1); } },
+  { type:'ghost',   icon:'👻', title:'GHOST BLESSING!',   desc:'You got a free Ghost Tap item!',           theme:'ghost',
+    apply(){ inv.ghost=(inv.ghost||0)+1; SS('tr_inv',inv); checkDailyChallenge('event',1); } },
+];
+
+function scheduleRandomEvent(){
+  const delay = 800 + Math.random() * 1500; // fire 0.8–2.3s after round starts
+  setTimeout(()=>{
+    if(!gameActive) return;
+    const ev = EVENTS[Math.floor(Math.random()*EVENTS.length)];
+    ev.apply();
+    showEventToast({ type:ev.theme, icon:ev.icon, title:ev.title, desc:ev.desc });
+    updateApuChips();
+  }, delay);
+}
+
+let eventHideTimer = null;
+function showEventToast({ type, icon, title, desc }){
+  const toast = document.getElementById('eventToast');
+  clearTimeout(eventHideTimer);
+  document.getElementById('etIcon').textContent  = icon;
+  document.getElementById('etTitle').textContent = title;
+  document.getElementById('etDesc').textContent  = desc;
+  toast.className = `event-toast ${type} show`;
+  eventHideTimer = setTimeout(()=>{ toast.classList.remove('show'); }, 3000);
+}
+
+// ══════════ PRESTIGE SYSTEM ══════════
+function openPrestige(){
+  if(level < 10) return;
+  const next = prestigeLevel + 1;
+  const stars = '⭐'.repeat(Math.min(next,5)) + (next>5?` +${next-5}`:'');
+  document.getElementById('prestigeStarsDisplay').textContent = stars;
+  document.getElementById('prestigeMultDisplay').textContent  = `×${(1+next*0.1).toFixed(1)}`;
+  document.getElementById('prestigeModal').classList.add('show');
+}
+function closePrestige(){ document.getElementById('prestigeModal').classList.remove('show'); }
+
+function confirmPrestige(){
+  if(level < 10) return;
+  prestigeLevel++;
+  SS('tr_prestige', prestigeLevel);
+
+  // Reset everything
+  coins=60; streak=0; xp=0; level=1; shopBuys=0;
+  inv={shield:0,slow:0,reveal:0,double:0,ghost:0,insurance:0};
+  upgrades={tapPower:0,crashGuard:0,coinBoost:0,xpBoost:0};
+  perks={autoShield:false,streakSave:false,luckyTap:false};
+  roundSurvivedCount=0;
+  SS('tr_coins',coins); SS('tr_streak',streak); SS('tr_xp',xp);
+  SS('tr_level',level); SS('tr_sbuys',shopBuys); SS('tr_inv',inv);
+  SS('tr_upgr',upgrades); SS('tr_perks',perks); SS('tr_survcount',0);
+
+  closePrestige();
+  updateUI(); renderShopTab(); renderDailyChallenges();
+
+  // Flash prestige celebration
+  showEventToast({ type:'rain', icon:'✨', title:`PRESTIGE ${prestigeLevel}!`,
+    desc:`Score multiplier is now ×${prestigeMult().toFixed(1)}. Welcome back, stronger!` });
+
+  openPreModal();
+}
+
+function updatePrestigeBanner(){
+  const banner = document.getElementById('prestigeBanner');
+  const next   = prestigeLevel + 1;
+  if(level >= 10){
+    document.getElementById('prestigeNextMult').textContent = `×${(1+next*0.1).toFixed(1)}`;
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+}
+
+// ══════════ DAILY CHALLENGES ══════════
+function checkDailyChallenge(type, val){
+  let updated = false;
+  dailyChallenges.forEach(c=>{
+    if(c.done) return;
+    if(c.type !== type) return;
+    if(type === 'combo'){
+      if(val > c.progress) c.progress = val;
+    } else {
+      c.progress = Math.max(c.progress, val);
+    }
+    if(c.progress >= c.target && !c.done){
+      c.done = true;
+      updated = true;
+      // Award reward
+      const coinMatch = c.reward.match(/\+(\d+) coins/);
+      if(coinMatch){ coins += parseInt(coinMatch[1]); saveAll(); }
+      // Show toast
+      showEventToast({ type:'rain', icon:'⚡', title:'CHALLENGE DONE!',
+        desc:`${c.text} — ${c.reward}` });
+    }
+  });
+  dcState.challenges = dailyChallenges;
+  SS('tr_dc', dcState);
+  if(updated){ updateUI(); renderDailyChallenges(); }
+}
+
+function renderDailyChallenges(){
+  const list = document.getElementById('dcList');
+  if(!list) return;
+  list.innerHTML = dailyChallenges.map(c=>{
+    const pct = Math.min(100, Math.floor((c.progress/c.target)*100));
+    return `
+      <div class="dc-item ${c.done?'done':''}">
+        <div class="dc-row1">
+          <div class="dc-name">${c.done?'✅ ':''}<b>${c.text}</b></div>
+          <div class="dc-reward">${c.done?'DONE':c.reward}</div>
+        </div>
+        <div class="dc-bar-bg"><div class="dc-bar-fill" style="width:${pct}%"></div></div>
+        <div class="dc-status ${c.done?'done-txt':''}">
+          <span>${c.done ? 'Completed!' : `${c.progress}/${c.target}`}</span>
+          <span>${c.done ? '' : pct+'%'}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Countdown to midnight
+  const now = new Date(); const midnight = new Date(); midnight.setHours(24,0,0,0);
+  const h = Math.floor((midnight-now)/3600000);
+  const m = Math.floor(((midnight-now)%3600000)/60000);
+  document.getElementById('dcRefresh').textContent = `⏰ Refreshes in ${h}h ${m}m`;
+}
+
+// ══════════ UPDATE UI ══════════
+function updateUI(){
+  document.getElementById('coinDisplay').textContent=coins;
+  // Show prestige stars after level
+  const stars = prestigeLevel > 0 ? ' ' + '⭐'.repeat(Math.min(prestigeLevel,3)) + (prestigeLevel>3?`+${prestigeLevel-3}`:'') : '';
+  document.getElementById('lvDisplay').textContent = level + stars;
+  document.getElementById('xpDisplay').textContent=xp;
+  document.getElementById('xpNextDisplay').textContent=xpForNext(level);
+  document.getElementById('xpBar').style.width=(xp/xpForNext(level)*100)+'%';
+  document.getElementById('sc1').textContent=coins;
+  document.getElementById('sc2').textContent=streak;
+  document.getElementById('sc3').textContent=best;
+  document.getElementById('sc4').textContent=level;
+
+  const sm=getStreakMult();
+  const sb=document.getElementById('streakBanner');
+  if(streak>=3){ sb.style.display='flex'; document.getElementById('streakBannerTxt').textContent=`🔥 ${streak}× STREAK — ×${sm.toFixed(1)} BONUS`; document.getElementById('bonusBadge').style.display=''; }
+  else { sb.style.display='none'; document.getElementById('bonusBadge').style.display='none'; }
+
+  document.getElementById('spinBtn').disabled=spinUsed;
+  document.getElementById('spinBtn').textContent=spinUsed?'✅ ALREADY SPUN TODAY':'🎰 SPIN!';
+
+  // Prestige multiplier badge in modeBadge when active
+  if(prestigeLevel > 0){
+    document.getElementById('modeBadge').textContent = `✨ PRESTIGE ×${prestigeMult().toFixed(1)}`;
+    document.getElementById('modeBadge').style.color='var(--gold)';
+    document.getElementById('modeBadge').style.borderColor='rgba(255,210,77,0.4)';
+    document.getElementById('modeBadge').style.background='rgba(255,210,77,0.08)';
+  }
+
+  updatePrestigeBanner();
+  document.getElementById('shopCoinDisplay').textContent=coins;
+}
+
+function saveAll(){
+  SS('tr_coins',coins); SS('tr_streak',streak); SS('tr_best',best);
+  SS('tr_level',level); SS('tr_xp',xp); SS('tr_rounds',roundsPlayed);
+  SS('tr_inv',inv); SS('tr_upgr',upgrades); SS('tr_perks',perks);
+  SS('tr_tscore',totalScore); SS('tr_sbuys',shopBuys);
+  SS('tr_prestige',prestigeLevel);
+}
+
+init();
+</script>
+</body>
+</html>
